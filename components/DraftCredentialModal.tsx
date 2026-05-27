@@ -35,6 +35,8 @@ export function DraftCredentialModal({ isOpen, onClose, onSave, editData, notify
 
   useEffect(() => {
     if (isOpen) {
+      // Reset the draft when the modal is opened for a different credential.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setDraft(editData ? { ...editData } : initialDraft);
     } else {
       setShowPreviewModal(false);

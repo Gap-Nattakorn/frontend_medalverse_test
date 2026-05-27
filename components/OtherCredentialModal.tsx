@@ -6,6 +6,7 @@ import { DateInput } from "@/components/ui/DateInput";
 import { withBackendAuthHeaders } from "@/shared/auth/backend-access-token.client";
 import { apiPath } from "@/shared/constants/routes";
 import { EventsApiResponse } from "@/modules/experience/domain/dashboard.types";
+import { CredentialItem } from "@/modules/credentials/domain/credential.types";
 
 // --- Types ---
 type OtherCredentialForm = {
@@ -313,6 +314,7 @@ export function OtherCredentialModal({ isOpen, onClose, onSuccess, notifyError }
           issueDate: form.issueDate,
           keyLearning: form.keyLearning,
           visibility: form.visibility,
+          credentialSource: "other",
           eventId: form.eventId || undefined,
           eventField: form.eventField,
         }),
@@ -342,6 +344,7 @@ export function OtherCredentialModal({ isOpen, onClose, onSuccess, notifyError }
           issuedOn: formatDisplayDate(form.heldStartDate || form.issueDate),
           organization: form.organizationName.trim() || "Medalverze",
           isVerified: true,
+          visibility: form.visibility,
           category: "events",
           issuerLogo: "/assets/icons/cone.svg",
           coverImage: credentialImage || "/assets/icons/cone.svg",

@@ -9,7 +9,7 @@ export default async function CredentialDetailPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams?: Promise<{ shared?: string }>;
+  searchParams?: Promise<{ shared?: string; view?: string }>;
 }) {
   const { id } = await params;
   const resolvedSearchParams = searchParams ? await searchParams : undefined;
@@ -17,7 +17,7 @@ export default async function CredentialDetailPage({
   const view = resolvedSearchParams?.view;
   const session = await getServerSession();
 
-  if (session && view !== "event") {
+  if (session && !shared && view !== "event") {
     redirect(`${ROUTES.dashboard}?openCredential=${encodeURIComponent(id)}`);
   }
 

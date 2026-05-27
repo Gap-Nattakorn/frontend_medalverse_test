@@ -12,11 +12,11 @@ export function CredentialCloudMainShell({ children }: { children: React.ReactNo
   const shouldShowSubmenuArea = !isCredentialDetail;
 
   return (
-    <main className="flex min-w-0 flex-1 pr-1.5 pl-0">
+    <main className="flex min-w-0 flex-1 overflow-hidden pr-1.5 pl-0">
       {shouldShowSubmenuArea && (
         <div
           className={[
-            "z-20 h-full shrink-0",
+            "z-20 hidden h-full shrink-0 md:block",
             "transition-all duration-500 ease-in-out",
             "[clip-path:inset(0_-9999px_0_0)]",
             isSubmenuOpen
@@ -31,7 +31,7 @@ export function CredentialCloudMainShell({ children }: { children: React.ReactNo
       )}
 
       <div
-        className={`min-w-0 flex-1 overflow-auto transition-all duration-500 ease-in-out ${isCredentialDetail ? "p-2.5" : "rounded-r-3xl p-2"
+        className={`min-w-0 flex-1 overflow-auto overflow-x-hidden transition-all duration-500 ease-in-out ${isCredentialDetail ? "p-2.5" : "rounded-r-3xl p-2"
           }`}
       >
         {children}

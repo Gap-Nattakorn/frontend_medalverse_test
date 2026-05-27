@@ -9,6 +9,7 @@ export type CredentialItem = {
   issuedOn: string;
   organization: string;
   isVerified: boolean;
+  visibility: CredentialVisibility;
   category: CredentialCategory;
   issuerLogo: string;
   coverImage: string;

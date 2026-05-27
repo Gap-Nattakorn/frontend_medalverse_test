@@ -7,7 +7,6 @@ import {
 import { queryMockCredentials } from "@/modules/credentials/infrastructure/mock-credentials";
 import { BACKEND_ACCESS_TOKEN_COOKIE } from "@/shared/auth/backend-access-token";
 import { getAppDataMode, getBackendBaseUrl } from "@/shared/config/data-mode";
-import { use } from "react";
 
 type CreatedCredentialStore = {
   items: CredentialItem[];
@@ -217,6 +216,7 @@ export async function POST(request: NextRequest) {
   }
 
   const payload = body as Record<string, unknown>;
+  const credentialSource = String(payload.credentialSource ?? payload.source ?? "").toLowerCase();
   const credentialName = typeof payload.credentialName === "string" ? payload.credentialName.trim() : "";
   const credentialCategory = typeof payload.credentialCategory === "string" ? payload.credentialCategory.trim() : "";
   const organizationName = typeof payload.organizationName === "string" ? payload.organizationName.trim() : "";
@@ -227,6 +227,13 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       { success: false, error: "credentialName and credentialCategory are required" },
       { status: 400 },
+    );
+  }
+
+  if (credentialSource === "metaverse" || credentialSource === "medalverse" || payload.isMetaverse === true) {
+    return NextResponse.json(
+      { success: false, error: "Metaverse credential creation is currently disabled" },
+      { status: 403 },
     );
   }
 
@@ -243,7 +250,8 @@ export async function POST(request: NextRequest) {
       field: typeof payload.eventField === "string" ? payload.eventField : "",
       rank: typeof payload.rank === "string" ? payload.rank : "",
       key_learning: typeof payload.keyLearning === "string" ? payload.keyLearning : "",
-      private: (payload.visibility as string | undefined) === "private",
+      is_private: (payload.visibility as string | undefined) === "private",
+      source: "other",
     };
 
     const backendResponse = await fetch(`${getBackendBaseUrl()}/api/v1/credentials`, {
@@ -278,6 +286,7 @@ export async function POST(request: NextRequest) {
     issuedOn: formatIssueDate(issueDate),
     organization: organizationName || "Medalverze",
     isVerified: true,
+    visibility: (payload.visibility as string | undefined) === "private" ? "private" : "public",
     category: eventId ? "events" : "portfolio",
     issuerLogo: "/app/assets/icons/cone.svg",
     coverImage: "/app/assets/icons/cone.svg",

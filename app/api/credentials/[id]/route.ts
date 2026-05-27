@@ -65,6 +65,21 @@ function toDetail(item: CredentialItem): CredentialDetail {
   };
 }
 
+function isSharedRequest(request: NextRequest) {
+  const value = request.nextUrl.searchParams.get("shared");
+  return value === "1" || value === "true";
+}
+
+function blockPrivateShared(detail: CredentialDetail) {
+  if (detail.credential.visibility !== "private") {
+    return null;
+  }
+  return NextResponse.json(
+    { success: false, error: "This credential is private and cannot be shared publicly" },
+    { status: 403 },
+  );
+}
+
 function applyDetailOverride(detail: CredentialDetail, id: string): CredentialDetail {
   const override = getOverrideStore().byId[id];
   if (!override) {
@@ -83,6 +98,7 @@ function applyDetailOverride(detail: CredentialDetail, id: string): CredentialDe
 
 export async function GET(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   const { id } = await context.params;
+  const sharedRequest = isSharedRequest(request);
   // console.log("🔥 Requested ID:", id)
   // console.log(`Handling GET /api/credentials/${id}`);
   // console.log(`Backend Base URL: ${getBackendBaseUrl()}`);
@@ -101,11 +117,15 @@ export async function GET(request: NextRequest, context: { params: Promise<{ id:
       : request.cookies.get(BACKEND_ACCESS_TOKEN_COOKIE)?.value ?? "";
 
     // Public shared link case (no login/token): serve local mock detail
-    if (!token) {
+    if (!token && !sharedRequest) {
       if (!localDetail) {
         return NextResponse.json({ success: false, error: "Credential not found" }, { status: 404 });
       }
       const mergedLocalDetail = applyDetailOverride(localDetail, id);
+      const privateResponse = blockPrivateShared(mergedLocalDetail);
+      if (privateResponse) {
+        return privateResponse;
+      }
       const response: CredentialDetailResponse = {
         success: true,
         data: mergedLocalDetail,
@@ -114,7 +134,7 @@ export async function GET(request: NextRequest, context: { params: Promise<{ id:
     }
 
     try {
-      const backendResponse = await fetch(`${getBackendBaseUrl()}/api/v1/credentials/${id}`, {
+      const backendResponse = await fetch(`${getBackendBaseUrl()}/api/v1/credentials/${id}${sharedRequest ? "?shared=1" : ""}`, {
         cache: "no-store",
         headers: {
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -125,6 +145,12 @@ export async function GET(request: NextRequest, context: { params: Promise<{ id:
         // If backend auth/record fails, allow public page to fallback to local/mock detail.
         if (localDetail) {
           const mergedLocalDetail = applyDetailOverride(localDetail, id);
+          if (sharedRequest) {
+            const privateResponse = blockPrivateShared(mergedLocalDetail);
+            if (privateResponse) {
+              return privateResponse;
+            }
+          }
           const response: CredentialDetailResponse = {
             success: true,
             data: mergedLocalDetail,
@@ -146,6 +172,12 @@ export async function GET(request: NextRequest, context: { params: Promise<{ id:
       const raw = (backendPayload?.data ?? backendPayload) as Record<string, unknown>;
       const item = mapBackendCredentialToItem(raw);
       const detail = mapBackendCredentialToDetail(item, raw);
+      if (sharedRequest) {
+        const privateResponse = blockPrivateShared(detail);
+        if (privateResponse) {
+          return privateResponse;
+        }
+      }
 
       const response: CredentialDetailResponse = {
         success: true,
@@ -177,6 +209,12 @@ export async function GET(request: NextRequest, context: { params: Promise<{ id:
   }
 
   const mergedDetail = applyDetailOverride(detail, id);
+  if (sharedRequest) {
+    const privateResponse = blockPrivateShared(mergedDetail);
+    if (privateResponse) {
+      return privateResponse;
+    }
+  }
 
   const response: CredentialDetailResponse = {
     success: true,
@@ -275,6 +313,10 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
       organization: String(draft.organizationName ?? baseDetail.credential.organization),
       type: String(draft.credentialCategory ?? baseDetail.credential.type),
       issuedOn: String(draft.issueDate ?? baseDetail.credential.issuedOn),
+      visibility:
+        draft.visibility === "private" || draft.visibility === "public"
+          ? draft.visibility
+          : baseDetail.credential.visibility,
     },
   };
 
@@ -289,6 +331,7 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
       organization: nextDetail.credential.organization,
       type: nextDetail.credential.type,
       issuedOn: nextDetail.credential.issuedOn,
+      visibility: nextDetail.credential.visibility,
     };
   }
 

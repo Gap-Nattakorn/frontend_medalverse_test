@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { Earth, LockKeyhole } from "lucide-react";
 import { VerifiedBadgeImage } from "@/components/ui/VerifiedBadgeImage";
+import { CredentialVisibility } from "@/modules/credentials/domain/credential.types";
 
 type CredentialCardData = {
   type: string;
@@ -12,22 +13,25 @@ type CredentialCardData = {
   issuedOn: string;
   organization: string;
   isVerified: boolean;
+  visibility: CredentialVisibility;
 };
 
 export default function CredentialCard({
   data,
   href,
   onClick,
+  onVisibilityChange,
 }: {
   data: CredentialCardData;
   href?: string;
   onClick?: () => void;
+  onVisibilityChange?: (visibility: CredentialVisibility) => void;
 }) {
-  const [visibility, setVisibility] = useState<"Public" | "Private">("Public");
   const [showVisibilityMenu, setShowVisibilityMenu] = useState(false);
+  const visibilityLabel = data.visibility === "private" ? "Private" : "Public";
 
   const cardBody = (
-    <article className="group flex h-full min-h-[286px] flex-col overflow-hidden rounded-2xl border border-[#d8e7f5] bg-white shadow-[0_1px_0_rgba(15,23,42,0.04)] transition duration-300 hover:-translate-y-0.5 hover:shadow-[0_12px_30px_rgba(59,130,246,0.12)]">
+    <article className="group flex h-full min-h-[286px] min-w-0 w-full flex-col overflow-hidden rounded-2xl border border-[#d8e7f5] bg-white shadow-[0_1px_0_rgba(15,23,42,0.04)] transition duration-300 hover:-translate-y-0.5 hover:shadow-[0_12px_30px_rgba(59,130,246,0.12)]">
       <div className="relative h-[98px] shrink-0 rounded-xl bg-gradient-to-b from-[#EEF5FC] to-[#DFECFA] m-2">
         <div className="absolute right-3 top-3 flex items-center gap-2">
           <span className="rounded-full bg-white/80 px-2 py-1 shadow-sm text-caption-caption-sm text-center text-text-brand-primary ">{data.type}</span>
@@ -37,36 +41,42 @@ export default function CredentialCard({
               onClick={(event) => {
                 event.preventDefault();
                 event.stopPropagation();
+                if (!onVisibilityChange) {
+                  return;
+                }
                 setShowVisibilityMenu((prev) => !prev);
               }}
               className="inline-flex h-6 w-6 items-center justify-center shadow-sm rounded-full bg-white/80 text-text-brand-primary transition hover:bg-white"
               aria-label="Visibility"
             >
-              {visibility === "Public" ? <Earth size={12} /> : <LockKeyhole size={12} />}
+              {data.visibility === "public" ? <Earth size={12} /> : <LockKeyhole size={12} />}
             </button>
-            {showVisibilityMenu ? (
+            {showVisibilityMenu && onVisibilityChange ? (
               <div className="absolute right-0 top-8 z-20 w-[108px] rounded-xl border border-slate-200 bg-white p-1 shadow-lg">
-                {(["Public", "Private"] as const).map((option) => (
+                {(["public", "private"] as const).map((option) => (
                   <button
                     key={option}
                     type="button"
                     onClick={(event) => {
                       event.preventDefault();
                       event.stopPropagation();
-                      setVisibility(option);
+                      onVisibilityChange?.(option);
                       setShowVisibilityMenu(false);
                     }}
                     className={`mb-1 w-full rounded-lg px-2 py-1.5 text-left text-body-sm-medium last:mb-0 ${
-                      visibility === option ? "bg-slate-100 text-slate-800" : "text-slate-700 hover:bg-slate-50"
+                      data.visibility === option ? "bg-slate-100 text-slate-800" : "text-slate-700 hover:bg-slate-50"
                     }`}
                   >
-                    {option}
+                    {option === "public" ? "Public" : "Private"}
                   </button>
                 ))}
               </div>
             ) : null}
           </div>
         </div>
+        <span className="absolute bottom-3 right-3 rounded-full bg-white/80 px-2 py-1 text-[10px] font-medium text-text-brand-primary shadow-sm">
+          {visibilityLabel}
+        </span>
       </div>
 
       <div className="relative flex flex-1 flex-col px-6 pb-3 pt-9">

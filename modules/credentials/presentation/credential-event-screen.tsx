@@ -201,6 +201,7 @@ export function CredentialEventScreen({ credentialId }: { credentialId: string }
                   issuedOn: item.issuedOn,
                   organization: item.organization,
                   isVerified: item.isVerified,
+                  visibility: item.visibility,
                 }}
               />
             ))

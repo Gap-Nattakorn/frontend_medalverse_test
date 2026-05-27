@@ -1,14 +1,12 @@
 "use client";
 
 import {
-  Calendar,
   CalendarDays,
   ChevronLeft,
   ChevronRight,
   Filter,
   Plus,
   Search,
-  ShieldCheck,
   Shapes,
   Award,
 } from "lucide-react";
@@ -45,7 +43,6 @@ export default function CredentialsPage() {
     setPage,
     totalPages,
     loading,
-    addMenuAnchor,
     setAddMenuAnchor,
     showCreateModal,
     setShowCreateModal,
@@ -65,12 +62,6 @@ export default function CredentialsPage() {
     setShowCreatedSuccessModal,
     showFilters,
     setShowFilters,
-    showDatePicker,
-    setShowDatePicker,
-    startDate,
-    setStartDate,
-    endDate,
-    setEndDate,
     selectedCredentialTypes,
     selectedStatus,
     setSelectedStatus,
@@ -81,13 +72,13 @@ export default function CredentialsPage() {
     visibleItems,
     filteredVisibleItems,
     activeFilterCount,
-    dateRangeLabel,
     isHeaderAddMenuOpen,
     isEmptyAddMenuOpen,
     hasAnyCredentials,
     openOtherCredentialModal,
     openMedalverseModal,
     removeCredential,
+    updateCredentialVisibility,
     toggleCredentialTypeFilter,
     clearFilters,
     notifySuccess,
@@ -114,8 +105,8 @@ export default function CredentialsPage() {
   };
 
   return (
-    <div className="relative min-h-full rounded-3xl p-4">
-      <header className="mb-3 flex items-center justify-between">
+    <div className="relative min-h-full min-w-0 overflow-x-hidden rounded-3xl p-2 sm:p-4">
+      <header className="mb-3 flex flex-col items-stretch gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div className="text-heading-h3 text-text-primary">
           Credentials
         </div>
@@ -125,10 +116,10 @@ export default function CredentialsPage() {
             onClick={() =>
               setAddMenuAnchor((prev) => (prev === "header" ? null : "header"))
             }
-            className="inline-flex h-11 items-center gap-2 rounded-xl bg-background-bg-primary-solid px-4 text-body-sm-medium text-white transition duration-300  hover:bg-background-bg-primary-solid-hover hover:shadow-lg active:scale-95"
+            className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-background-bg-primary-solid px-4 text-body-sm-medium text-white transition duration-300 hover:bg-background-bg-primary-solid-hover hover:shadow-lg active:scale-95 sm:w-auto"
           >
             <Plus size={16} />
-            <span className="hidden sm:inline">Add Credentials</span>
+            <span>Add Credentials</span>
           </button>
           {isHeaderAddMenuOpen ? (
             <div className="absolute right-0 top-12 z-20 w-52 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl">
@@ -155,10 +146,8 @@ export default function CredentialsPage() {
         </div>
       </header>
 
-      <div
-        className={`mb-3 grid gap-3 ${hasAnyCredentials ? "grid-cols-[1fr_auto_auto]" : "grid-cols-[1fr_auto]"}`}
-      >
-        <div className="flex items-center gap-2 rounded-xl border border-[#d5e2f0] bg-white px-3">
+      <div className="mb-3 grid min-w-0 grid-cols-1 gap-2 sm:grid-cols-[1fr_auto] sm:gap-3">
+        <div className="flex min-w-0 items-center gap-2 rounded-xl border border-[#d5e2f0] bg-white px-3">
           <Search size={18} className="text-text-secondary" />
           <input
             value={query}
@@ -167,13 +156,13 @@ export default function CredentialsPage() {
               setPage(1);
             }}
             placeholder="Search Credential"
-            className="h-11 w-full border-0 bg-transparent text-caption-caption-md placeholder:text-text-secondary text-text-secondary outline-none"
+            className="h-11 min-w-0 w-full border-0 bg-transparent text-caption-caption-md placeholder:text-text-secondary text-text-secondary outline-none"
           />
         </div>
         <button
           type="button"
           onClick={() => setShowFilters((prev) => !prev)}
-          className={`inline-flex h-11 items-center gap-2 rounded-xl border px-4 text-body-md-medium text-white transition duration-300 
+          className={`inline-flex h-11 items-center justify-center gap-2 rounded-xl border px-4 text-body-md-medium text-white transition duration-300 
               bg-background-bg-brand-solid border border-border-border-brand-solid text-white hover:bg-background-bg-brand-solid-hover hover:shadow-lg active:scale-95`}
         >
           <Filter size={16} />
@@ -265,7 +254,7 @@ export default function CredentialsPage() {
                   </button>
                 </div>
               ) : null}
-              <section className="order-2 grid min-h-0 flex-1 grid-cols-1 gap-3 sm:grid-cols-2 lg:order-1 lg:grid-cols-3 xl:grid-cols-4">
+              <section className="order-2 grid min-h-0 min-w-0 flex-1 grid-cols-1 gap-3 sm:grid-cols-2 lg:order-1 lg:grid-cols-3 xl:grid-cols-4">
                 {Array.from({ length: 12 }).map((_, index) => (
                   <CredentialSkeletonCard key={index} />
                 ))}
@@ -411,8 +400,8 @@ export default function CredentialsPage() {
                 </button>
               </div>
             ) : null}
-            <section className="order-2 grid min-h-0 flex-1 grid-cols-1 gap-3 sm:grid-cols-2 lg:order-1 lg:grid-cols-3 xl:grid-cols-4">
-              {filteredVisibleItems.map((item, index) => (
+            <section className="order-2 grid min-h-0 min-w-0 flex-1 grid-cols-1 gap-3 sm:grid-cols-2 lg:order-1 lg:grid-cols-3 xl:grid-cols-4">
+              {filteredVisibleItems.map((item) => (
                 <div
                   key={`${item.id}-${filterMotionVersion}`}
                   className="flex flex-col h-full"
@@ -427,7 +416,9 @@ export default function CredentialsPage() {
                         issuedOn: item.issuedOn,
                         organization: item.organization,
                         isVerified: item.isVerified,
+                        visibility: item.visibility,
                       }}
+                      onVisibilityChange={(visibility) => updateCredentialVisibility(item, visibility)}
                     />
                   ) : (
                     <EventItem
@@ -561,6 +552,7 @@ export default function CredentialsPage() {
             type: finalDraft.type,
             category: finalDraft.category,
             isVerified: true,
+            visibility: "public",
             issuerLogo: "/app/assets/icons/cone.svg",
             coverImage: "/app/assets/icons/cone.svg",
           };

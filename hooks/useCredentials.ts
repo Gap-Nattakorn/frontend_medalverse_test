@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { CredentialItem, CredentialsListResponse } from "@/modules/credentials/domain/credential.types";
+import { CredentialItem, CredentialsListResponse, CredentialVisibility } from "@/modules/credentials/domain/credential.types";
 import { withBackendAuthHeaders } from "@/shared/auth/backend-access-token.client";
 import { apiPath } from "@/shared/constants/routes";
 import { type AppToastPayload } from "@/components/ui/AppToast";
@@ -141,24 +141,24 @@ export function useCredentialsPage() {
     return visibleItems.filter((item) => {
 
       if (tab === "events" && item.category !== "events") {
-      return false;
+        return false;
       }
 
       if (selectedCredentialTypes.length > 0 && !selectedCredentialTypes.includes(item.type)) {
         return false;
       }
 
-      if (selectedStatus === "public" && item.category !== "events") {
+      if (selectedStatus === "public" && item.visibility !== "public") {
         return false;
       }
 
-      if (selectedStatus === "private" && item.category !== "portfolio") {
+      if (selectedStatus === "private" && item.visibility !== "private") {
         return false;
       }
 
       return true;
     });
-  }, [visibleItems, selectedCredentialTypes, selectedStatus]);
+  }, [visibleItems, selectedCredentialTypes, selectedStatus, tab]);
 
   const activeFilterCount = selectedCredentialTypes.length + (selectedStatus === "all" ? 0 : 1);
   const dateRangeLabel = `${formatDateLabel(startDate)} - ${formatDateLabel(endDate)}`;
@@ -177,7 +177,7 @@ export function useCredentialsPage() {
 
   function openMedalverseModal() {
     setAddMenuAnchor(null);
-    setShowMedalverseModal(true);
+    notifyError("Metaverse credential creation is currently disabled");
   }
 
   function openEdit(item: CredentialItem) {
@@ -189,6 +189,39 @@ export function useCredentialsPage() {
     setAddedCredentials((prev) => prev.filter((cred) => cred.id !== item.id));
     setDeleteTarget(null);
     notifySuccess("Credential deleted");
+  }
+
+  async function updateCredentialVisibility(item: CredentialItem, visibility: CredentialVisibility) {
+    const previousVisibility = item.visibility;
+    if (previousVisibility === visibility) {
+      return;
+    }
+
+    const applyVisibility = (credential: CredentialItem) =>
+      credential.id === item.id ? { ...credential, visibility } : credential;
+    const rollbackVisibility = (credential: CredentialItem) =>
+      credential.id === item.id ? { ...credential, visibility: previousVisibility } : credential;
+
+    setItems((prev) => prev.map(applyVisibility));
+    setAddedCredentials((prev) => prev.map(applyVisibility));
+
+    try {
+      const response = await fetch(apiPath(`/api/credentials/${item.id}`), {
+        method: "PATCH",
+        headers: withBackendAuthHeaders({ "Content-Type": "application/json" }),
+        body: JSON.stringify({ draft: { visibility } }),
+      });
+      const payload = await response.json().catch(() => null);
+      if (!response.ok || !payload?.success) {
+        throw new Error(payload?.error ?? "Unable to update visibility");
+      }
+      notifySuccess(`Credential set to ${visibility}`);
+      setRefreshVersion((prev) => prev + 1);
+    } catch (error) {
+      setItems((prev) => prev.map(rollbackVisibility));
+      setAddedCredentials((prev) => prev.map(rollbackVisibility));
+      notifyError(error instanceof Error ? error.message : "Unable to update visibility");
+    }
   }
 
   function toggleCredentialTypeFilter(type: string) {
@@ -243,6 +276,7 @@ export function useCredentialsPage() {
     openMedalverseModal,
     openEdit,
     removeCredential,
+    updateCredentialVisibility,
     toggleCredentialTypeFilter,
     clearFilters,
     notifySuccess,

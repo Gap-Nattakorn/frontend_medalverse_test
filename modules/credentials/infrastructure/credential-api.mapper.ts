@@ -82,8 +82,21 @@ export function mapBackendCredentialToItem(rawPayload: AnyRecord): CredentialIte
   const isVerified = readBoolean(credential, ["is_verified", "verified"], true);
   const isPrivate = readBoolean(credential, ["private", "is_private"], false);
   const coverImage = readString(credential, ["cover_image", "coverImage", "image_url", "imageUrl", "thumbnail"], "") || "/app/assets/icons/cone.svg";
+  const hasEvent = Boolean(readString(credential, ["event_id", "eventId"], ""));
 
-  return { id, type, title, description, issuedOn, organization, isVerified, category: isPrivate ? "portfolio" : "events", issuerLogo: "/app/assets/icons/cone.svg", coverImage };
+  return {
+    id,
+    type,
+    title,
+    description,
+    issuedOn,
+    organization,
+    isVerified,
+    visibility: isPrivate ? "private" : "public",
+    category: hasEvent ? "events" : "portfolio",
+    issuerLogo: "/app/assets/icons/cone.svg",
+    coverImage,
+  };
 }
 
 export function mapBackendCredentialToDetail(item: CredentialItem, rawSource?: AnyRecord): CredentialDetail {

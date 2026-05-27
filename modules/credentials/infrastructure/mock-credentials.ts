@@ -17,6 +17,7 @@ const DEMO_CREDENTIALS: CredentialItem[] = [
     issuedOn: "May 1, 2026",
     organization: "Medalverse Academy",
     isVerified: true,
+    visibility: "private",
     category: "portfolio",
     issuerLogo: "/assets/icons/cone.svg",
     coverImage: MOCK_EVENT_COVERS[0],
@@ -29,6 +30,7 @@ const DEMO_CREDENTIALS: CredentialItem[] = [
     issuedOn: "Jun 15, 2026",
     organization: "Chulalongkorn University",
     isVerified: true,
+    visibility: "public",
     category: "events",
     issuerLogo: "/assets/icons/cone.svg",
     coverImage: MOCK_EVENT_COVERS[1],
@@ -41,6 +43,7 @@ const DEMO_CREDENTIALS: CredentialItem[] = [
     issuedOn: "Jul 10, 2026",
     organization: "Thammasat University",
     isVerified: true,
+    visibility: "public",
     category: "events",
     issuerLogo: "/assets/icons/cone.svg",
     coverImage: MOCK_EVENT_COVERS[2],
@@ -49,7 +52,7 @@ const DEMO_CREDENTIALS: CredentialItem[] = [
 
 const BASE_CREDENTIALS: CredentialItem[] = [
   ...DEMO_CREDENTIALS,
-  ...Array.from({ length: 26 }, (_, index) => ({
+  ...Array.from({ length: 26 }, (_, index): CredentialItem => ({
   id: `cred-${index + 1}`,
   type: "Trophy",
   title: index % 2 === 0 ? "Tech Innovation Summit USA 2025" : "Global AI Innovation Award 2026",
@@ -58,6 +61,7 @@ const BASE_CREDENTIALS: CredentialItem[] = [
   issuedOn: "Oct 1, 2024",
   organization: "Medalverze",
   isVerified: true,
+  visibility: index % 3 === 0 ? "private" : "public",
   category: index % 3 === 0 ? "portfolio" : "events",
   issuerLogo: "/app/assets/icons/cone.svg",
   coverImage: MOCK_EVENT_COVERS[index % MOCK_EVENT_COVERS.length],

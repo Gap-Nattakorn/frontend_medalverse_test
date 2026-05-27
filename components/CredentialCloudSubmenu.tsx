@@ -1,12 +1,6 @@
 "use client";
 
-import {
-  Award,
-  Menu,
-  Star,
-  FileSymlink,
-  SquareUserRound,
-} from "lucide-react";
+import { Award, Menu, Star, FileSymlink, SquareUserRound } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useCredentialCloudUI } from "@/components/credential-cloud-ui";
@@ -76,10 +70,7 @@ export function CredentialCloudSubmenu() {
                   key={item.label}
                   className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-body-sm-medium "
                 >
-                  <Icon
-                  size={18}
-                  className={"text-slate-400"}
-                />
+                  <Icon size={18} className={"text-slate-400"} />
                   <span className={"text-slate-400"}>{item.label}</span>
                 </div>
               );
@@ -91,7 +82,7 @@ export function CredentialCloudSubmenu() {
                   size={18}
                   className={isActive ? "text-text-brand-primary" : ""}
                 />
-                <span >{item.label}</span>
+                <span>{item.label}</span>
               </Link>
             );
           })}

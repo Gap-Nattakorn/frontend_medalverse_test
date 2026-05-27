@@ -361,6 +361,7 @@ export function MedalverseModal({ isOpen, onClose, onSuccess }: Props) {
             issueDate: form.issueDate,
             keyLearning: form.keyLearning,
             visibility: form.visibility,
+            credentialSource: "metaverse",
             eventId: form.eventId || undefined,
             eventField: form.eventField,
           }),

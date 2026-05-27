@@ -5,23 +5,6 @@ import { CredentialDetail } from "@/modules/credentials/domain/credential.types"
 import { withBackendAuthHeaders } from "@/shared/auth/backend-access-token.client";
 import { apiPath } from "@/shared/constants/routes";
 
-function parseSharedCredentialDetail(sharedData?: string): CredentialDetail | null {
-  if (!sharedData) {
-    return null;
-  }
-
-  try {
-    const json = decodeURIComponent(escape(atob(decodeURIComponent(sharedData))));
-    const parsed = JSON.parse(json) as CredentialDetail;
-    if (!parsed?.credential?.id) {
-      return null;
-    }
-    return parsed;
-  } catch {
-    return null;
-  }
-}
-
 export function CredentialDetailScreen({
   credentialId,
   sharedData,
@@ -29,32 +12,22 @@ export function CredentialDetailScreen({
   credentialId: string;
   sharedData?: string;
 }) {
-  const sharedDetail = useMemo(
-    () => parseSharedCredentialDetail(sharedData),
-    [sharedData],
-  );
+  const isSharedView = useMemo(() => Boolean(sharedData), [sharedData]);
   const [detail, setDetail] = useState<CredentialDetail | null>(null);
-  const [loading, setLoading] = useState(!sharedDetail);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (sharedDetail) {
-      setDetail(sharedDetail);
-      setLoading(false);
-      setError(null);
-      return;
-    }
-
     const controller = new AbortController();
 
     async function load() {
       setLoading(true);
       setError(null);
       try {
-        const response = await fetch(apiPath(`/api/credentials/${credentialId}`), {
+        const response = await fetch(apiPath(`/api/credentials/${credentialId}${isSharedView ? "?shared=1" : ""}`), {
           signal: controller.signal,
           cache: "no-store",
-          headers: withBackendAuthHeaders(),
+          headers: isSharedView ? undefined : withBackendAuthHeaders(),
         });
 
         if (!response.ok) {
@@ -88,7 +61,7 @@ export function CredentialDetailScreen({
 
     load();
     return () => controller.abort();
-  }, [credentialId, sharedDetail]);
+  }, [credentialId, isSharedView]);
 
   if (loading) {
     return (
